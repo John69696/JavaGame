@@ -11,13 +11,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     private ArrayList<Bullet> bullets;
     private Wave wave;
     private ParticleManager particleManager;  // Particle Manager
-
     private boolean up, down, left, right;
+    private boolean gameOver = false;  // Track if the game is over
 
     public GamePanel() {
         setFocusable(true);
         setPreferredSize(new Dimension(800, 600));
-        setBackground(Color.BLACK); // Set the background to black
+        setBackground(Color.BLACK);
         addKeyListener(this);
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -25,7 +25,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         player = new Player(400, 300);
         bullets = new ArrayList<>();
         wave = new Wave();
-        particleManager = new ParticleManager();  // Initialize the particle manager
+        particleManager = new ParticleManager();
 
         timer = new Timer(16, this); // ~60 FPS
         timer.start();
@@ -33,13 +33,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (gameOver) return; // Stop updating if the game is over
+
         player.update(up, down, left, right);
         wave.update(player, bullets);
-
-        // Update particles
         particleManager.updateParticles();
 
-        // Update bullets
         for (int i = bullets.size() - 1; i >= 0; i--) {
             Bullet bullet = bullets.get(i);
             bullet.update();
@@ -49,7 +48,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         }
 
         checkCollisions();
+
+        if (player.getHealth() <= 0) {
+            triggerGameOver();
+        }
+
         repaint();
+    }
+
+    private void triggerGameOver() {
+        gameOver = true;
+        timer.stop(); // Stop the game loop timer
+        repaint(); // Trigger a repaint to display the Game Over screen
     }
 
     private void checkCollisions() {
@@ -60,11 +70,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
                 if (bullet.getBounds().intersects(enemy.getBounds())) {
                     enemy.takeDamage(1);
                     bullets.remove(i);
-                    spawnBulletImpactParticles(bullet.getX(), bullet.getY());  // Particle effect on bullet hit
+                    spawnBulletImpactParticles(bullet.getX(), bullet.getY());
 
                     if (enemy.getHealth() <= 0) {
                         wave.getEnemies().remove(j);
-                        spawnEnemyDeathParticles(enemy.getX(), enemy.getY());  // Particle effect on enemy death
+                        spawnEnemyDeathParticles(enemy.getX(), enemy.getY());
                         player.addCoins((int) (Math.random() * 3) + 1);
                         if (Math.random() < 0.15) {
                             wave.spawnHealthPack(enemy.getX(), enemy.getY());
@@ -79,7 +89,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             if (player.getBounds().intersects(enemy.getBounds())) {
                 if (player.takeDamage(10)) {
                     pushBackEnemy(enemy);
-                    spawnCollisionParticles(player.getX(), player.getY());  // Particle effect on player-enemy collision
+                    spawnCollisionParticles(player.getX(), player.getY());
                 }
             }
         }
@@ -94,35 +104,31 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     }
 
     private void spawnBulletImpactParticles(int x, int y) {
-        // Spawning particles at the location where the bullet hits
-        for (int i = 0; i < 15; i++) {  // Reduced from 50 to 15
-            int velocityX = (int) (Math.random() * 10 - 5);  // Random velocity
-            int velocityY = (int) (Math.random() * 10 - 5);  // Random velocity
-            Color color = Color.ORANGE;  // Color of the particles
+        for (int i = 0; i < 10; i++) {
+            int velocityX = (int) (Math.random() * 10 - 5);
+            int velocityY = (int) (Math.random() * 10 - 5);
+            Color color = Color.ORANGE;
             particleManager.addParticle(x, y, velocityX, velocityY, color);
         }
     }
-    
+
     private void spawnEnemyDeathParticles(int x, int y) {
-        // Spawning explosion-like particles on enemy death
-        for (int i = 0; i < 15; i++) {  // Reduced from 50 to 15
-            int velocityX = (int) (Math.random() * 10 - 5);  // Random velocity
-            int velocityY = (int) (Math.random() * 10 - 5);  // Random velocity
-            Color color = Color.RED;  // Explosion color
+        for (int i = 0; i < 10; i++) {
+            int velocityX = (int) (Math.random() * 10 - 5);
+            int velocityY = (int) (Math.random() * 10 - 5);
+            Color color = Color.RED;
             particleManager.addParticle(x, y, velocityX, velocityY, color);
         }
     }
-    
+
     private void spawnCollisionParticles(int x, int y) {
-        // Spawning small particles when player collides with an enemy
-        for (int i = 0; i < 15; i++) {  // Reduced from 50 to 15
-            int velocityX = (int) (Math.random() * 3 - 1);  // Small random velocity
-            int velocityY = (int) (Math.random() * 3 - 1);  // Small random velocity
-            Color color = Color.YELLOW;  // Color of the particles
+        for (int i = 0; i < 10; i++) {
+            int velocityX = (int) (Math.random() * 3 - 1);
+            int velocityY = (int) (Math.random() * 3 - 1);
+            Color color = Color.YELLOW;
             particleManager.addParticle(x, y, velocityX, velocityY, color);
         }
     }
-    
 
     private void pushBackEnemy(Enemy enemy) {
         int dx = enemy.getX() - player.getX();
@@ -136,16 +142,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        if (gameOver) {
+            drawGameOverScreen(g);
+            return;
+        }
+
         player.draw(g);
         for (Bullet bullet : bullets) bullet.draw(g);
         wave.draw(g);
+        particleManager.drawParticles(g);
+    }
 
-        // Draw particles
-        particleManager.drawParticles(g);  // Draw all particles
+    private void drawGameOverScreen(Graphics g) {
+        g.setColor(Color.RED);
+        g.setFont(new Font("Arial", Font.BOLD, 48));
+        g.drawString("GAME OVER", getWidth() / 2 - 150, getHeight() / 2);
+        g.setFont(new Font("Arial", Font.PLAIN, 24));
+        g.drawString("Press R to Restart", getWidth() / 2 - 100, getHeight() / 2 + 50);
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (gameOver && e.getKeyCode() == KeyEvent.VK_R) {
+            restartGame();
+            return;
+        }
+
         switch (e.getKeyCode()) {
             case KeyEvent.VK_W -> up = true;
             case KeyEvent.VK_S -> down = true;
@@ -153,6 +176,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             case KeyEvent.VK_D -> right = true;
             case KeyEvent.VK_R -> player.reload();
         }
+    }
+
+    private void restartGame() {
+        player = new Player(400, 300);
+        bullets.clear();
+        wave = new Wave();
+        particleManager = new ParticleManager();
+        gameOver = false;
+        timer.start();
     }
 
     @Override
@@ -170,9 +202,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
 
     @Override
     public void mousePressed(MouseEvent e) {
-        double angle = Math.atan2(e.getY() - player.getY(), e.getX() - player.getX());
-        if (player.shoot()) {
-            bullets.add(new Bullet(player.getX() + 15, player.getY() + 15, angle));
+        if (!gameOver) {
+            double angle = Math.atan2(e.getY() - player.getY(), e.getX() - player.getX());
+            if (player.shoot()) {
+                bullets.add(new Bullet(player.getX() + 15, player.getY() + 15, angle));
+            }
         }
     }
 

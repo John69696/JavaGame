@@ -52,23 +52,34 @@ public class Wave {
         // Handle bullet collisions with enemies
         ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
         ArrayList<Coin> newCoins = new ArrayList<>();
+        ArrayList<Bullet> bulletsToRemove = new ArrayList<>();
+        
         for (Bullet bullet : bullets) {
             for (Enemy enemy : enemies) {
                 if (enemy.getBounds().intersects(bullet.getBounds())) {
                     enemy.takeDamage(1);
-                    bullets.remove(bullet);
+                    bulletsToRemove.add(bullet); // Mark bullet for removal
+        
                     if (enemy.getHealth() <= 0) {
-                        enemiesToRemove.add(enemy);
+                        enemiesToRemove.add(enemy); // Mark enemy for removal
                         spawnDeathParticles(enemy);
-                        dropCoins(enemy, newCoins);
+                        dropCoins(enemy, newCoins); // Generate coins
                         if (Math.random() < 0.15) {
                             spawnHealthPack(enemy.getX(), enemy.getY());
                         }
                     }
-                    break;
+                    break; // Stop checking this bullet against other enemies
                 }
             }
         }
+        
+        // Safely remove bullets and enemies outside the loop
+        bullets.removeAll(bulletsToRemove);
+        enemies.removeAll(enemiesToRemove);
+        
+        // Add new coins to the game
+        coins.addAll(newCoins);
+        
 
         // Remove dead enemies and add new coins
         enemies.removeAll(enemiesToRemove);
@@ -118,13 +129,13 @@ public class Wave {
         double random = Math.random();
         if (random < 0.4) {
             // Fast enemy
-            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 20, 20, 2, 4);
+            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 20, 20, 1, 4, Color.RED);
         } else if (random < 0.8) {
             // Normal enemy
-            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 30, 30, 3, 2);
+            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 30, 30, 2, 2, Color.PINK);
         } else {
             // Large, slow enemy
-            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 40, 40, 4, 1);
+            return new Enemy((int) (Math.random() * 800), (int) (Math.random() * 600), 40, 40, 4, 1, Color.ORANGE);
         }
     }
 
@@ -134,7 +145,7 @@ public class Wave {
 
     private void spawnDeathParticles(Enemy enemy) {
         Random rand = new Random();
-        int numParticles = 50;
+        int numParticles = 20;
         for (int i = 0; i < numParticles; i++) {
             double angle = rand.nextDouble() * Math.PI * 2;
             double speed = rand.nextDouble() * 4 + 2;

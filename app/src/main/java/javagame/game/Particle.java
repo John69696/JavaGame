@@ -35,7 +35,7 @@ public class Particle {
     public void draw(Graphics g) {
         if (isAlive()) {
             g.setColor(color);
-            g.fillOval(x, y, 5, 5);  // Particle size of 5px
+            g.fillOval(x, y, 2, 2);  // Particle size of 5px
         }
     }
 

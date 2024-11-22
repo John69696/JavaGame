@@ -7,14 +7,16 @@ public class Enemy {
     private int width, height;
     private int health;
     private int speed;
+    private Color color;
 
-    public Enemy(int x, int y, int width, int height, int health, int speed) {
+    public Enemy(int x, int y, int width, int height, int health, int speed, Color color) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.health = health;
         this.speed = speed;
+        this.color = color;
     }
 
     public void update(Player player) {
@@ -29,7 +31,7 @@ public class Enemy {
     }
 
     public void draw(Graphics g) {
-        g.setColor(Color.RED);
+        g.setColor(color);
         g.fillRect(x, y, width, height);
     }
 

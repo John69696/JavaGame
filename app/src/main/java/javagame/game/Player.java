@@ -57,7 +57,7 @@ public class Player {
         g.fillRect(x, y, width, height);
 
         // Draw health bar
-        g.setColor(Color.RED);
+        g.setColor(Color.GREEN);
         g.fillRect(10, 10, (int) (200 * (health / (double) maxHealth)), 20);
         g.setColor(Color.WHITE);
         g.drawRect(10, 10, 200, 20);
@@ -72,7 +72,7 @@ public class Player {
         g.drawString("Ammo: " + ammo, 220, 50);
 
         // Draw coins
-        g.setColor(Color.ORANGE);
+        g.setColor(Color.YELLOW);
         g.drawString("Coins: " + coins, 10, 70);
     }
 
@@ -95,4 +95,8 @@ public class Player {
 
     public int getX() { return x; }
     public int getY() { return y; }
+
+    public int getHealth(){
+        return health;
+    }
 }
