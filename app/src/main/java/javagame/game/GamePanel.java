@@ -13,6 +13,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     private ParticleManager particleManager;  // Particle Manager
     private boolean up, down, left, right;
     private boolean gameOver = false;  // Track if the game is over
+    private Store store;
 
     public GamePanel() {
         setFocusable(true);
@@ -22,23 +23,30 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         addMouseListener(this);
         addMouseMotionListener(this);
 
-        player = new Player(400, 300);
+        player = new Player(400, 300, this);
         bullets = new ArrayList<>();
         wave = new Wave();
         particleManager = new ParticleManager();
+        store = new Store();
 
         timer = new Timer(16, this); // ~60 FPS
         timer.start();
     }
+    
+    public Store getStore(){
+        return store;
+    }
 
-    @Override
     public void actionPerformed(ActionEvent e) {
-        if (gameOver) return; // Stop updating if the game is over
-
+        if (gameOver || store.isOpen()) {
+            repaint(); // Redraw the store and UI
+            return; // Stop updates when the store is open
+        }
+    
         player.update(up, down, left, right);
         wave.update(player, bullets);
         particleManager.updateParticles();
-
+    
         for (int i = bullets.size() - 1; i >= 0; i--) {
             Bullet bullet = bullets.get(i);
             bullet.update();
@@ -46,13 +54,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
                 bullets.remove(i);
             }
         }
-
+    
         checkCollisions();
-
         if (player.getHealth() <= 0) {
             triggerGameOver();
         }
-
         repaint();
     }
 
@@ -152,6 +158,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
         for (Bullet bullet : bullets) bullet.draw(g);
         wave.draw(g);
         particleManager.drawParticles(g);
+        if (store.isOpen()) store.draw(g); // Draw store if open
     }
 
     private void drawGameOverScreen(Graphics g) {
@@ -169,6 +176,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             return;
         }
 
+   
+        if (e.getKeyCode() == KeyEvent.VK_E) {
+            store.toggle(); // Open/close the store
+            return;
+        }
+    
+        if (store.isOpen()) {
+            return; // Ignore other key inputs when the store is open
+        }
+
         switch (e.getKeyCode()) {
             case KeyEvent.VK_W -> up = true;
             case KeyEvent.VK_S -> down = true;
@@ -179,7 +196,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     }
 
     private void restartGame() {
-        player = new Player(400, 300);
+        player = new Player(400, 300, this);
         bullets.clear();
         wave = new Wave();
         particleManager = new ParticleManager();
@@ -201,14 +218,17 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
     public void keyTyped(KeyEvent e) {}
 
     @Override
-    public void mousePressed(MouseEvent e) {
-        if (!gameOver) {
-            double angle = Math.atan2(e.getY() - player.getY(), e.getX() - player.getX());
-            if (player.shoot()) {
-                bullets.add(new Bullet(player.getX() + 15, player.getY() + 15, angle));
-            }
+public void mousePressed(MouseEvent e) {
+    if (store.isOpen()) {
+        store.handleMouseClick(e.getX(), e.getY(), player); // Handle store button clicks
+    } else {
+        double angle = Math.atan2(e.getY() - player.getY(), e.getX() - player.getX());
+        if (player.shoot()) {
+            bullets.add(new Bullet(player.getX() + 15, player.getY() + 15, angle));
         }
     }
+}
+
 
     @Override
     public void mouseReleased(MouseEvent e) {}

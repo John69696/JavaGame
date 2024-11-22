@@ -10,9 +10,14 @@ public class Player {
     private int ammo;
     private int maxAmmo;
     private int coins;
+    private int damage;
+    private long speedBoostEndTime;
+    private boolean speedBoostActive;
     private boolean reloading;
+    private GamePanel gamePanel;
+  
 
-    public Player(int x, int y) {
+    public Player(int x, int y, GamePanel gamePanel) {
         this.x = x;
         this.y = y;
         this.width = 30;
@@ -23,14 +28,21 @@ public class Player {
         this.ammo = maxAmmo;
         this.coins = 0;
         this.reloading = false;
+        this.gamePanel = gamePanel;
     }
 
     public void update(boolean up, boolean down, boolean left, boolean right) {
-        int speed = 5;
-        if (up) y -= speed;
-        if (down) y += speed;
-        if (left) x -= speed;
-        if (right) x += speed;
+        if (speedBoostActive && System.currentTimeMillis() > speedBoostEndTime) {
+            speedBoostActive = false;
+        }
+        int moveSpeed = speedBoostActive ? 10 : 5;
+        if (up) y -= moveSpeed;
+        if (down) y += moveSpeed;
+        if (left) x -= moveSpeed;
+        if (right) x += moveSpeed;
+    }    
+    public GamePanel getGamePanel() {
+        return gamePanel;
     }
 
     public boolean shoot() {
@@ -99,4 +111,24 @@ public class Player {
     public int getHealth(){
         return health;
     }
+    public int getCoins() {
+        return coins;
+    }
+    
+    public void subtractCoins(int amount) {
+        coins -= amount;
+    }
+    public void increaseDamage(int amount) {
+        damage += amount;
+    }
+    
+    public int getDamage() {
+        return damage;
+    }
+    public void activateSpeedBoost(long duration) {
+        speedBoostActive = true;
+        speedBoostEndTime = System.currentTimeMillis() + duration;
+    }
+    
+
 }

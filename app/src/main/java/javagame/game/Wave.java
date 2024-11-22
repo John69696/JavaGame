@@ -28,6 +28,11 @@ public class Wave {
         for (Enemy enemy : enemies) {
             enemy.update(player);
         }
+        if (!player.getGamePanel().getStore().isOpen()) {
+            for (Enemy enemy : enemies) {
+                enemy.update(player);
+            }
+        }
 
         // Update coins
         Iterator<Coin> coinIterator = coins.iterator();
